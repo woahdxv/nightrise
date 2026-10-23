@@ -119,7 +119,7 @@ local function downloadFile(path, func)
 		for attempt = 1, 3 do
 			local suc, result = pcall(function()
 				local response = serverRequest('/file', { path = select(1, path:gsub('nightrise/', '')) })
-				if not response.Success then error(tostring(response.StatusCode)) end
+				if not response.Success then shared.weikLastError = tostring(response.StatusCode) .. ' ' .. tostring(response.Body):sub(1, 120) error(shared.weikLastError) end
 				return response.Body
 			end)
 			if suc and result ~= '404: Not Found' then
@@ -130,7 +130,7 @@ local function downloadFile(path, func)
 			task.wait(1)
 		end
 		if not success then
-			error('Failed to download ' .. path .. ' after 3 attempts')
+			error('Failed to download ' .. path .. ' after 3 attempts: ' .. tostring(shared.weikLastError))
 		end
 		if path:find('%.lua') then
 			res = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.\n' .. res
