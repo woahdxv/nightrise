@@ -1,3 +1,4 @@
+-- ========== WHITELIST CHECK ==========
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 
@@ -30,48 +31,76 @@ local function getHWID()
 end
 
 local hwid = getHWID()
-local body = HttpService:JSONEncode({ key = key, hwid = hwid })
+local body = HttpService:JSONEncode({ key = tostring(key), hwid = tostring(hwid) })
 
 local valid = false
 local errMsg = KICK_MESSAGE
 
-local ok, res = pcall(function()
-	return game:HttpPost(API_URL, body, true, "application/json")
-end)
+local function handleResponse(status, rbody)
+	status = tonumber(status) or 0
+	rbody = tostring(rbody or "")
+	if status == 200 then
+		local decoded
+		pcall(function() decoded = HttpService:JSONDecode(rbody) end)
+		if type(decoded) == "table" and decoded.error then
+			errMsg = tostring(decoded.error)
+			return false
+		end
+		return true
+	end
+	pcall(function()
+		local d = HttpService:JSONDecode(rbody)
+		if type(d) == "table" and d.error then
+			errMsg = tostring(d.error)
+		end
+	end)
+	return false
+end
 
-if ok and type(res) == "string" then
-	local decoded
-	pcall(function() decoded = HttpService:JSONDecode(res) end)
-	if type(decoded) == "table" and decoded.error then
-		errMsg = tostring(decoded.error)
+-- Prefer request APIs (reliable JSON + status codes)
+local req = (syn and syn.request)
+	or (http and http.request)
+	or http_request
+	or request
+	or (fluxus and fluxus.request)
+
+if typeof(req) == "function" then
+	local rok, rres = pcall(function()
+		return req({
+			Url = API_URL,
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json",
+				["Accept"] = "application/json",
+			},
+			Body = body,
+		})
+	end)
+	if rok and type(rres) == "table" then
+		valid = handleResponse(rres.StatusCode or rres.Status, rres.Body or rres.body)
 	else
-		valid = true
+		errMsg = "auth request failed"
 	end
 else
-	local req = (syn and syn.request) or (http and http.request) or http_request or request
-	if typeof(req) == "function" then
-		local rok, rres = pcall(function()
-			return req({
-				Url = API_URL,
-				Method = "POST",
-				Headers = { ["Content-Type"] = "application/json" },
-				Body = body,
-			})
+	-- Fallback HttpPost (arg order varies by executor)
+	local ok, res = pcall(function()
+		return game:HttpPost(API_URL, body, "application/json")
+	end)
+	if not ok then
+		ok, res = pcall(function()
+			return game:HttpPost(API_URL, body, true, "application/json")
 		end)
-		if rok and type(rres) == "table" then
-			local status = tonumber(rres.StatusCode) or tonumber(rres.Status) or 0
-			local rbody = rres.Body or rres.body or ""
-			if status == 200 then
-				valid = true
-			else
-				pcall(function()
-					local d = HttpService:JSONDecode(rbody)
-					if type(d) == "table" and d.error then
-						errMsg = tostring(d.error)
-					end
-				end)
-			end
+	end
+	if ok and type(res) == "string" then
+		local decoded
+		pcall(function() decoded = HttpService:JSONDecode(res) end)
+		if type(decoded) == "table" and decoded.error then
+			errMsg = tostring(decoded.error)
+		else
+			valid = true
 		end
+	else
+		errMsg = "auth request failed"
 	end
 end
 
