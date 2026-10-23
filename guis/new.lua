@@ -139,7 +139,7 @@ local function safecall(func, ...)
 	xpcall(function()
 		func(unpack(args))
 	end, function(err)
-		warn("[AEROV4] GUI Error: "..err)
+		warn("[weik] GUI Error: "..err)
 	end)
 end
 
@@ -8015,7 +8015,7 @@ function mainapi:Load(skipgui, profile)
 		if result then
 			guidata = result
 		else
-			self:CreateNotification('aerov4', 'Failed to load GUI settings. Using defaults.', 10, 'alert')
+			self:CreateNotification('weik', 'Failed to load GUI settings. Using defaults.', 10, 'alert')
 		end
 
 		if guidata.MobileSettings then
@@ -8111,10 +8111,10 @@ function mainapi:Load(skipgui, profile)
 		if result then
 			savedata = result
 		else
-			self:CreateNotification('aerov4', 'Failed to load '..self.Profile..' profile. Creating a new one.', 10, 'alert')
+			self:CreateNotification('weik', 'Failed to load '..self.Profile..' profile. Creating a new one.', 10, 'alert')
 		end
 	else
-		self:CreateNotification('aerov4', 'No profile found. Creating new profile for '..self.Profile, 8, 'info')
+		self:CreateNotification('weik', 'No profile found. Creating new profile for '..self.Profile, 8, 'info')
 	end
 
 	for i, v in savedata.Categories or {} do
@@ -8524,7 +8524,7 @@ local scarcitybanner = Instance.new('TextLabel')
 scarcitybanner.Size = UDim2.fromScale(1, 0.02)
 scarcitybanner.Position = UDim2.fromScale(0, 0.97)
 scarcitybanner.BackgroundTransparency = 1
-scarcitybanner.Text = 'shitty ass aerov4 script gang gang'
+scarcitybanner.Text = 'shitty ass weik script gang gang'
 scarcitybanner.TextScaled = true
 scarcitybanner.TextColor3 = Color3.new(1, 1, 1)
 scarcitybanner.TextStrokeTransparency = 0.5

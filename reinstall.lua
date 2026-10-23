@@ -14,14 +14,14 @@ local function wipe(path)
 	end
 end
 
-if isfolder('aerov4') then
-	wipe('aerov4')
+if isfolder('weik') then
+	wipe('weik')
 end
 
 pcall(function()
 	game:GetService('StarterGui'):SetCore('SendNotification', {
-		Title = 'aerov4',
-		Text = 'deleted aerov4, reinjecting now',
+		Title = 'weik',
+		Text = 'deleted weik, reinjecting now',
 		Duration = 4
 	})
 end)

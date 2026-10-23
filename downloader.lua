@@ -31,7 +31,7 @@ local function wipeFolder(path)
 	end
 end
 
-for _, folder in {'aerov4', 'nightrise/games', 'nightrise/profiles', 'nightrise/assets', 'nightrise/libraries', 'nightrise/guis'} do
+for _, folder in {'weik', 'nightrise/games', 'nightrise/profiles', 'nightrise/assets', 'nightrise/libraries', 'nightrise/guis'} do
 	if not isfolder(folder) then makefolder(folder) end
 end
 
@@ -96,7 +96,7 @@ if not shared.VapeDeveloper then
 		end
 	end)
 	if commit ~= 'main' and (isfile('nightrise/profiles/commit.txt') and readfile('nightrise/profiles/commit.txt') or '') ~= commit then
-		wipeFolder('aerov4')
+		wipeFolder('weik')
 		wipeFolder('nightrise/games')
 		wipeFolder('nightrise/guis')
 		pcall(function() if isfile('nightrise/guis/new.lua') then delfile('nightrise/guis/new.lua') end end)

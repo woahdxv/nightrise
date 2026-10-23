@@ -4,7 +4,7 @@ if shared.vape then shared.vape:Uninject() end
 local LOADER_URL = "https://raw.githubusercontent.com/woahdxv/nightrise/main/downloader.lua" 
 local _initArgs = ...
 if type(_initArgs) ~= "table" then _initArgs = {} end
-shared.aerov4User = "spookers 👻"
+shared.weikUser = "spookers 👻"
 
 if identifyexecutor then
 	if table.find({'Wave', 'Seliware', 'Volt'}, ({identifyexecutor()})[1]) then
@@ -135,7 +135,7 @@ pcall(migrateProfiles)
 local function finishLoading()
 	vape.Init = nil
 	if not vape.Load then
-		warn('[aerov4] vape.Load is nil skipping load')
+		warn('[weik] vape.Load is nil skipping load')
 		return
 	end
 	vape:Load()
@@ -186,7 +186,7 @@ local function finishLoading()
 	if not shared.vapereload then
 		if not vape.Categories then return end
 		if vape.Categories.Main.Options['GUI bind indicator'].Enabled then
-			vape:CreateNotification('[aerov4] Finished Loading', 'wsg ' .. shared.aerov4User .. ' ' .. (vape.VapeButton and 'Press the button in the top right to open GUI' or 'Press ' .. table.concat(vape.Keybind, ' + '):upper() .. ' to open GUI'), 5)
+			vape:CreateNotification('[weik] Finished Loading', 'wsg ' .. shared.weikUser .. ' ' .. (vape.VapeButton and 'Press the button in the top right to open GUI' or 'Press ' .. table.concat(vape.Keybind, ' + '):upper() .. ' to open GUI'), 5)
 		end
 	end
 end
@@ -218,18 +218,18 @@ if not guiFunc then
 		end
 		context = '\n\nContext:\n' .. table.concat(parts, '\n')
 	end
-	error('[aerov4] syntax error in ' .. gui .. '.lua' .. '\n' .. errMsg .. context)
+	error('[weik] syntax error in ' .. gui .. '.lua' .. '\n' .. errMsg .. context)
 end
 vape = guiFunc()
 if not vape then
-	error('[aerov4] GUI returned nil file may be corrupted try deleting nightrise/guis/' .. gui .. '.lua and reinjecting.')
+	error('[weik] GUI returned nil file may be corrupted try deleting nightrise/guis/' .. gui .. '.lua and reinjecting.')
 end
 if not vape.Load then
 	if delfile then pcall(function() delfile('nightrise/guis/' .. gui .. '.lua') end) end
-	error('[aerov4] gui file corrupted (missing load) reinject..')
+	error('[weik] gui file corrupted (missing load) reinject..')
 end
 if not vape.Init and not vape.Load then
-	error('[aerov4] failed to initialize properly reinject to fix this bs')
+	error('[weik] failed to initialize properly reinject to fix this bs')
 end
 shared.vape = vape
 task.wait(0.1)
@@ -298,7 +298,7 @@ if not shared.VapeIndependent then
 				end
 				ctx = '\n\naround here:\n' .. table.concat(parts, '\n')
 			end
-			error('[aerov4] syntax error in ' .. gameFileId .. '.lua\n' .. msg .. where .. ctx)
+			error('[weik] syntax error in ' .. gameFileId .. '.lua\n' .. msg .. where .. ctx)
 		end
 		gameFunc(...)
 	else
