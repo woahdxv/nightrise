@@ -1,6 +1,6 @@
 local commit
 pcall(function()
-	commit = readfile('aerov4/profiles/commit.txt')
+	commit = readfile('nightrise/profiles/commit.txt')
 end)
 
 local function wipe(path)
