@@ -1,7 +1,52 @@
 repeat task.wait() until game:IsLoaded()
 if shared.vape then shared.vape:Uninject() end
 
-local LOADER_URL = "https://raw.githubusercontent.com/woahdxv/nightrise/main/downloader.lua" 
+local API_URL = "https://script-whitelist.weikauth.workers.dev"
+local KICK_MESSAGE = "Get a key from 52.22"
+local WATERMARK = '--This watermark is used to delete the file if its cached, remove it to make the file persist after vape updates.'
+
+local gateLocalPlayer = game:GetService('Players').LocalPlayer
+local scriptKey = getgenv().script_key
+if type(scriptKey) ~= 'string' or #scriptKey == 0 then
+	return gateLocalPlayer:Kick(KICK_MESSAGE)
+end
+
+local function serverRequest(route, payload)
+	payload.key = scriptKey
+	payload.hwid = gethwid()
+	return request({
+		Url = API_URL .. route,
+		Method = 'POST',
+		Headers = { ['Content-Type'] = 'application/json' },
+		Body = game:GetService('HttpService'):JSONEncode(payload),
+	})
+end
+
+local verifyResponse = serverRequest('/verify', {})
+if not verifyResponse.Success then
+	if verifyResponse.StatusCode == 403 then
+		return gateLocalPlayer:Kick(KICK_MESSAGE)
+	end
+	return warn('[weik] key check failed: ' .. tostring(verifyResponse.StatusCode))
+end
+
+for _, folder in {'nightrise', 'nightrise/games', 'nightrise/profiles', 'nightrise/assets', 'nightrise/libraries', 'nightrise/guis'} do
+	if not isfolder(folder) then makefolder(folder) end
+end
+
+local latestCommit = verifyResponse.Body
+local savedCommit = isfile('nightrise/profiles/commit.txt') and readfile('nightrise/profiles/commit.txt') or ''
+if latestCommit ~= savedCommit then
+	for _, folder in {'nightrise/games', 'nightrise/guis', 'nightrise/libraries'} do
+		for _, cached in listfiles(folder) do
+			if isfile(cached) and readfile(cached):sub(1, #WATERMARK) == WATERMARK then
+				delfile(cached)
+			end
+		end
+	end
+	writefile('nightrise/profiles/commit.txt', latestCommit)
+end
+
 local _initArgs = ...
 if type(_initArgs) ~= "table" then _initArgs = {} end
 shared.weikUser = "spookers 👻"
@@ -73,7 +118,9 @@ local function downloadFile(path, func)
 		local success = false
 		for attempt = 1, 3 do
 			local suc, result = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/woahdxv/nightrise/' .. readfile('nightrise/profiles/commit.txt') .. '/' .. select(1, path:gsub('nightrise/', '')), true)
+				local response = serverRequest('/file', { path = select(1, path:gsub('nightrise/', '')) })
+				if not response.Success then error(tostring(response.StatusCode)) end
+				return response.Body
 			end)
 			if suc and result ~= '404: Not Found' then
 				res = result
@@ -150,7 +197,7 @@ local function finishLoading()
 		if shared.VapeIndependent then return nil end
 
 		local closetArg = getgenv().Closet and '({Closet=true})' or '()'
-		local teleportScript = 'shared.vapereload = true\nloadstring(game:HttpGet("' .. LOADER_URL .. '", true), "loader")' .. closetArg
+		local teleportScript = 'shared.vapereload = true\ngetgenv().script_key = "' .. scriptKey .. '"\nloadstring(request({Url = "' .. API_URL .. '/loader", Method = "GET"}).Body, "loader")()'
 
 		if identifyexecutor and ({identifyexecutor()})[1] == 'Potassium' then
 			teleportScript = 'task.wait(12)\n' .. teleportScript
@@ -304,7 +351,8 @@ if not shared.VapeIndependent then
 	else
 		if not shared.VapeDeveloper then
 			local suc, res = pcall(function()
-				return game:HttpGet('https://raw.githubusercontent.com/woahdxv/nightrise/' .. readfile('nightrise/profiles/commit.txt') .. '/games/' .. gameFileId .. '.lua', true)
+				local response = serverRequest('/file', { path = 'games/' .. gameFileId .. '.lua' })
+					return response.Success and response.Body or nil
 			end)
 			if suc and res and res ~= '404: Not Found' then
 				local path = 'nightrise/games/' .. gameFileId .. '.lua'
