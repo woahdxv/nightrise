@@ -23,18 +23,6 @@ local mainapi = {
 	Windows = {}
 }
 
-mainapi.ServerUrl = 'https://script-whitelist.weikauth.workers.dev'
-mainapi.ServerRequest = function(route, payload)
-	payload.key = getgenv().script_key
-	payload.hwid = gethwid()
-	return request({
-		Url = mainapi.ServerUrl .. route,
-		Method = 'POST',
-		Headers = {['Content-Type'] = 'application/json'},
-		Body = game:GetService('HttpService'):JSONEncode(payload),
-	})
-end
-
 local cloneref = cloneref or function(obj)
 	return obj
 end
@@ -1449,9 +1437,7 @@ local function downloadFile(path, func)
 	if not isfile(path) then
 		createDownloader(path)
 		local suc, res = pcall(function()
-			local response = mainapi.ServerRequest('/file', { path = select(1, path:gsub('nightrise/', '')) })
-			if not response.Success then error(tostring(response.StatusCode) .. ' ' .. tostring(response.Body):sub(1, 120)) end
-			return response.Body
+			return game:HttpGet('https://raw.githubusercontent.com/woahdxv/nightrise/'..readfile('nightrise/profiles/commit.txt')..'/'..select(1, path:gsub('nightrise/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -9568,7 +9554,7 @@ general:CreateButton({
 		if shared.VapeDeveloper then
 			loadstring(readfile('nightrise/main.lua'), 'loader')()
 		else
-			loadstring(mainapi.ServerRequest('/file', { path = 'main.lua' }).Body, 'loader')()
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/woahdxv/nightrise/'..readfile('nightrise/profiles/commit.txt')..'/main.lua', true))()
 		end
 	end,
 	Tooltip = 'This will set your profile to the default settings of Vape'
@@ -9587,7 +9573,7 @@ general:CreateButton({
 		if shared.VapeDeveloper then
 			loadstring(readfile('nightrise/main.lua'), 'loader')()
 		else
-			loadstring(mainapi.ServerRequest('/file', { path = 'main.lua' }).Body, 'loader')()
+			loadstring(game:HttpGet('https://raw.githubusercontent.com/woahdxv/nightrise/'..readfile('nightrise/profiles/commit.txt')..'/main.lua', true))()
 		end
 	end,
 	Tooltip = 'Reloads vape for debugging purposes'
@@ -9776,7 +9762,7 @@ guipane:CreateDropdown({
 			if shared.VapeDeveloper then
 				loadstring(readfile('nightrise/main.lua'), 'loader')()
 			else
-				loadstring(mainapi.ServerRequest('/file', { path = 'main.lua' }).Body, 'loader')()
+				loadstring(game:HttpGet('https://raw.githubusercontent.com/woahdxv/nightrise/'..readfile('nightrise/profiles/commit.txt')..'/main.lua', true))()
 			end
 		end
 	end,
