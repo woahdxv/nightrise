@@ -1,17 +1,96 @@
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+
+local KICK_MESSAGE = "Get a key from 52.22"
+local API_URL = "https://script-whitelist.weikauth.workers.dev/verify"
+
+local function kick(msg)
+	Players.LocalPlayer:Kick(msg or KICK_MESSAGE)
+end
+
+local key = getgenv().script_key
+if type(key) ~= "string" or #key == 0 then
+	return kick(KICK_MESSAGE)
+end
+
+local function getHWID()
+	if typeof(gethwid) == "function" then
+		local ok, v = pcall(gethwid)
+		if ok and type(v) == "string" and #v > 0 then return v end
+	end
+	if typeof(gethwidhash) == "function" then
+		local ok, v = pcall(gethwidhash)
+		if ok and type(v) == "string" and #v > 0 then return v end
+	end
+	local ok, id = pcall(function()
+		return game:GetService("RbxAnalyticsService"):GetClientId()
+	end)
+	if ok and type(id) == "string" and #id > 0 then return id end
+	return tostring(Players.LocalPlayer.UserId)
+end
+
+local hwid = getHWID()
+local body = HttpService:JSONEncode({ key = key, hwid = hwid })
+
+local valid = false
+local errMsg = KICK_MESSAGE
+
+local ok, res = pcall(function()
+	return game:HttpPost(API_URL, body, true, "application/json")
+end)
+
+if ok and type(res) == "string" then
+	local decoded
+	pcall(function() decoded = HttpService:JSONDecode(res) end)
+	if type(decoded) == "table" and decoded.error then
+		errMsg = tostring(decoded.error)
+	else
+		valid = true
+	end
+else
+	local req = (syn and syn.request) or (http and http.request) or http_request or request
+	if typeof(req) == "function" then
+		local rok, rres = pcall(function()
+			return req({
+				Url = API_URL,
+				Method = "POST",
+				Headers = { ["Content-Type"] = "application/json" },
+				Body = body,
+			})
+		end)
+		if rok and type(rres) == "table" then
+			local status = tonumber(rres.StatusCode) or tonumber(rres.Status) or 0
+			local rbody = rres.Body or rres.body or ""
+			if status == 200 then
+				valid = true
+			else
+				pcall(function()
+					local d = HttpService:JSONDecode(rbody)
+					if type(d) == "table" and d.error then
+						errMsg = tostring(d.error)
+					end
+				end)
+			end
+		end
+	end
+end
+
+if not valid then
+	return kick(errMsg)
+end
+-- ========== END WHITELIST CHECK ==========
+
 repeat task.wait() until game:IsLoaded()
 if shared.vape then shared.vape:Uninject() end
-
 local LOADER_URL = "https://raw.githubusercontent.com/woahdxv/nightrise/main/downloader.lua" 
 local _initArgs = ...
 if type(_initArgs) ~= "table" then _initArgs = {} end
 shared.weikUser = "spookers 👻"
-
 if identifyexecutor then
 	if table.find({'Wave', 'Seliware', 'Volt'}, ({identifyexecutor()})[1]) then
 		getgenv().setthreadidentity = nil
 	end
 end
-
 local args = _initArgs
 if type(args) == "table" and args.Closet then
 	getgenv().Closet = true
@@ -20,7 +99,6 @@ else
 		getgenv().Closet = false
 	end
 end
-
 local vape
 local loadstring = function(...)
 	local res, err = loadstring(...)
@@ -37,7 +115,6 @@ local isfile = isfile or function(file)
 	end)
 	return suc and res ~= nil and res ~= ''
 end
-
 if identifyexecutor and table.find({'Madium', 'Medium'}, ({identifyexecutor()})[1]) then
 	local realgca = getcustomasset or getsynasset
 	if realgca then
@@ -66,7 +143,6 @@ end
 local playersService = cloneref(game:GetService('Players'))
 local httpService = cloneref(game:GetService('HttpService'))
 local teleportService = cloneref(game:GetService('TeleportService'))
-
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local res
@@ -92,18 +168,14 @@ local function downloadFile(path, func)
 	end
 	return (func or readfile)(path)
 end
-
 local function migrateProfiles()
 	if isfile('nightrise/profiles/migrated_placeid.txt') then return end
-
 	local oldId = tostring(game.GameId)
 	local newId = tostring(game.PlaceId)
-
 	if oldId == newId then
 		pcall(writefile, 'nightrise/profiles/migrated_placeid.txt', 'done')
 		return
 	end
-
 	local suffix = oldId .. '.txt'
 	for _, path in ipairs(listfiles('nightrise/profiles')) do
 		local name = path:gsub('\\', '/')
@@ -114,7 +186,6 @@ local function migrateProfiles()
 			end
 		end
 	end
-
 	if isfolder('nightrise/profiles/premade') then
 		for _, path in ipairs(listfiles('nightrise/profiles/premade')) do
 			local name = path:gsub('\\', '/')
@@ -126,12 +197,9 @@ local function migrateProfiles()
 			end
 		end
 	end
-
 	pcall(writefile, 'nightrise/profiles/migrated_placeid.txt', 'done')
 end
-
 pcall(migrateProfiles)
-
 local function finishLoading()
 	vape.Init = nil
 	if not vape.Load then
@@ -145,13 +213,10 @@ local function finishLoading()
 			task.wait(10)
 		until vape.Loaded == nil
 	end))
-
 	local function buildTeleportScript()
 		if shared.VapeIndependent then return nil end
-
 		local closetArg = getgenv().Closet and '({Closet=true})' or '()'
 		local teleportScript = 'shared.vapereload = true\nloadstring(game:HttpGet("' .. LOADER_URL .. '", true), "loader")' .. closetArg
-
 		if identifyexecutor and ({identifyexecutor()})[1] == 'Potassium' then
 			teleportScript = 'task.wait(12)\n' .. teleportScript
 		end
@@ -163,26 +228,21 @@ local function finishLoading()
 		end
 		return teleportScript
 	end
-
 	local function queueTeleport()
 		local teleportScript = buildTeleportScript()
 		if not teleportScript then return end
 		pcall(clear_teleport_queue)
 		pcall(queue_on_teleport, teleportScript)
 	end
-
 	queueTeleport()
-
 	vape:Clean(playersService.LocalPlayer.OnTeleport:Connect(function(state)
 		if state == Enum.TeleportState.Failed then return end
 		pcall(function() vape:Save() end)
 		queueTeleport()
 	end))
-
 	vape:Clean(function()
 		pcall(clear_teleport_queue)
 	end)
-
 	if not shared.vapereload then
 		if not vape.Categories then return end
 		if vape.Categories.Main.Options['GUI bind indicator'].Enabled then
@@ -190,16 +250,13 @@ local function finishLoading()
 		end
 	end
 end
-
 if not isfile('nightrise/profiles/gui.txt') then
 	writefile('nightrise/profiles/gui.txt', 'new')
 end
 local gui = readfile('nightrise/profiles/gui.txt')
-
 if not isfolder('nightrise/assets/' .. gui) then
 	makefolder('nightrise/assets/' .. gui)
 end
-
 local guiSource = downloadFile('nightrise/guis/' .. gui .. '.lua')
 local guiFunc, guiErr = loadstring(guiSource, 'gui')
 if not guiFunc then
@@ -233,7 +290,6 @@ if not vape.Init and not vape.Load then
 end
 shared.vape = vape
 task.wait(0.1)
-
 if getgenv().Closet then
 	local LogService = cloneref(game:GetService('LogService'))
 	local originals = {}
@@ -254,11 +310,9 @@ if getgenv().Closet then
 	getgenv()._vape_log_connection = conn
 	getgenv()._vape_originals = originals
 end
-
 if not shared.VapeIndependent then
 	loadstring(downloadFile('nightrise/games/universal.lua'), 'universal')()
 	local gameFileId = (game.GameId == 2619619496) and (game.PlaceId == 6872265039 and 6872265039 or 6872274481) or (game.GameId == 10516888336 and 10516888336 or game.PlaceId)
-
 	if isfile('nightrise/games/' .. gameFileId .. '.lua') then
 		local gameSrc = downloadFile('nightrise/games/' .. gameFileId .. '.lua')
 		local gameFunc, gameErr = loadstring(gameSrc, tostring(gameFileId))
